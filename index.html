@@ -4,11 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ハムスター健康管理アプリ🐹</title>
+    
+    <!-- アイコン設定 -->
+    <link rel="icon" href="hamster-icon.png" type="image/png">
+    <link rel="apple-touch-icon" href="hamster-icon.png">
+    
+    <!-- PWA設定 -->
+    <meta name="theme-color" content="#f97316">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ハムスター健康管理🐹">
+    
+    <!-- Open Graph設定 -->
+    <meta property="og:title" content="ハムスター健康管理アプリ🐹">
+    <meta property="og:description" content="大切なハムスターの健康を記録・管理するアプリです。体重、食事、健康チェック、通院記録などを管理できます。">
+    <meta property="og:image" content="hamster-icon.png">
+    <meta property="og:type" content="website">
+    
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.8.0/recharts.min.js"></script>
-    <script src="https://unpkg.com/lucide-react@latest/dist/esm/lucide-react.js" type="module"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -21,192 +36,14 @@
     
     <script type="text/babel">
         const { useState, useEffect } = React;
-        
-        // Lucide-reactアイコンの読み込み
-        const Heart = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>;
-        const Scale = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1ZM2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path><path d="m7 21 2-4-2-4"></path><path d="m17 21-2-4 2-4"></path><path d="M14 12h2c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-8c-1.1 0-2 .9-2 2v3c0 1.1.9 2 2 2h2"></path></svg>;
-        const Activity = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg>;
-        const Utensils = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path><path d="M7 2v20"></path><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"></path></svg>;
-        const Plus = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>;
-        const Trash2 = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>;
-        const Users = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>;
-        const Edit2 = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="M15 5l4 4"></path></svg>;
-        const Camera = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>;
-        const Download = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7,10 12,15 17,10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>;
-        const BarChart3 = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path></svg>;
-        const Stethoscope = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .2.3"></path><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"></path><circle cx="20" cy="10" r="2"></circle></svg>;
-        const HelpCircle = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>;
 
         const HamsterHealthApp = () => {
-            const [activeTab, setActiveTab] = useState('dashboard');
-            const [selectedHamster, setSelectedHamster] = useState(1);
-            const [showAddHamster, setShowAddHamster] = useState(false);
-            const [showEditHamster, setShowEditHamster] = useState(false);
-            const [showWeightChart, setShowWeightChart] = useState(false);
-            const [editingWeightId, setEditingWeightId] = useState(null);
-            const [editingWeight, setEditingWeight] = useState({ weight: '', date: '' });
-            
-            // ローカルストレージから初期データを読み込み
-            const loadFromStorage = (key, defaultValue) => {
-                try {
-                    const stored = localStorage.getItem(key);
-                    return stored ? JSON.parse(stored) : defaultValue;
-                } catch (error) {
-                    console.error(`Error loading ${key}:`, error);
-                    return defaultValue;
-                }
-            };
-
-            // ローカルストレージに保存
-            const saveToStorage = (key, value) => {
-                try {
-                    localStorage.setItem(key, JSON.stringify(value));
-                } catch (error) {
-                    console.error(`Error saving ${key}:`, error);
-                }
-            };
-
-            const [hamsters, setHamsters] = useState(() => 
-                loadFromStorage('hamsters', [
-                    { 
-                        id: 1, 
-                        name: 'もちもち', 
-                        breed: 'ゴールデン', 
-                        color: 'ノーマル',
-                        gender: '不明',
-                        genetics: '不明',
-                        birthDate: '2024-11-03',
-                        birthDateType: 'exact',
-                        adoptDate: '2024-11-10',
-                        adoptDateType: 'exact',
-                        photo: null
-                    }
-                ])
-            );
-
-            const [weightRecords, setWeightRecords] = useState(() =>
-                loadFromStorage('weightRecords', [
-                    { id: 1, hamsterId: 1, date: '2025-07-01', weight: 85.2 },
-                    { id: 2, hamsterId: 1, date: '2025-06-24', weight: 83.5 },
-                    { id: 3, hamsterId: 1, date: '2025-06-17', weight: 82.1 },
-                    { id: 4, hamsterId: 1, date: '2025-06-10', weight: 80.8 },
-                    { id: 5, hamsterId: 1, date: '2025-06-03', weight: 78.3 }
-                ])
-            );
-
-            const [foodRecords, setFoodRecords] = useState(() =>
-                loadFromStorage('foodRecords', [
-                    { id: 1, hamsterId: 1, date: '2025-07-03', food: 'ペレット', amount: '5g' },
-                    { id: 2, hamsterId: 1, date: '2025-07-03', food: 'ひまわりの種', amount: '2粒' }
-                ])
-            );
-
-            const [healthChecks, setHealthChecks] = useState(() =>
-                loadFromStorage('healthChecks', [
-                    { id: 1, hamsterId: 1, date: '2025-07-03', eyes: true, nose: true, teeth: true, fur: true, activity: true, appetite: true }
-                ])
-            );
-
-            const [medicalRecords, setMedicalRecords] = useState(() =>
-                loadFromStorage('medicalRecords', [
-                    { id: 1, hamsterId: 1, date: '2025-06-15', hospital: 'ペットクリニック', medicine: 'ビタミン剤', symptoms: '食欲低下', cost: 3500 }
-                ])
-            );
-
-            const [newHamster, setNewHamster] = useState({
-                name: '',
-                breed: '',
-                color: '',
-                gender: '不明',
-                genetics: '不明',
-                birthDate: '',
-                birthDateType: 'exact',
-                adoptDate: '',
-                adoptDateType: 'exact',
-                photo: null
-            });
-
-            const [editHamster, setEditHamster] = useState({
-                id: null,
-                name: '',
-                breed: '',
-                color: '',
-                gender: '不明',
-                genetics: '不明',
-                birthDate: '',
-                birthDateType: 'exact',
-                adoptDate: '',
-                adoptDateType: 'exact',
-                photo: null
-            });
-
-            const [newWeight, setNewWeight] = useState('');
-            const [newWeightDate, setNewWeightDate] = useState('');
-            const [newFood, setNewFood] = useState('');
-            const [newAmount, setNewAmount] = useState('');
-            const [newCheck, setNewCheck] = useState({
-                eyes: true, nose: true, teeth: true, fur: true, activity: true, appetite: true
-            });
-            const [newMedical, setNewMedical] = useState({
-                date: '',
-                hospital: '',
-                medicine: '',
-                symptoms: '',
-                cost: ''
-            });
-
-            const MAX_HAMSTERS = 999;
-            const currentHamster = hamsters.find(h => h.id === selectedHamster);
-            const currentDate = new Date().toISOString().split('T')[0];
-
-            // データが変更されたときにローカルストレージに保存
-            useEffect(() => {
-                saveToStorage('hamsters', hamsters);
-            }, [hamsters]);
-
-            useEffect(() => {
-                saveToStorage('weightRecords', weightRecords);
-            }, [weightRecords]);
-
-            useEffect(() => {
-                saveToStorage('foodRecords', foodRecords);
-            }, [foodRecords]);
-
-            useEffect(() => {
-                saveToStorage('healthChecks', healthChecks);
-            }, [healthChecks]);
-
-            useEffect(() => {
-                saveToStorage('medicalRecords', medicalRecords);
-            }, [medicalRecords]);
-
-            // 簡単な実装のため、主要な機能のみを実装
-            const calculateAge = (birthDate, birthDateType) => {
-                if (birthDateType === 'unknown') return '不明';
-                
-                const birth = new Date(birthDate);
-                const today = new Date();
-                const diffTime = Math.abs(today - birth);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                const months = Math.floor(diffDays / 30);
-                
-                if (birthDateType === 'year') return `約${months}ヶ月`;
-                if (birthDateType === 'yearMonth') return `約${months}ヶ月`;
-                return `${months}ヶ月`;
-            };
-
-            const getCurrentWeight = () => {
-                const hamsterWeights = weightRecords.filter(r => r.hamsterId === selectedHamster);
-                if (hamsterWeights.length === 0) return 0;
-                return hamsterWeights.sort((a, b) => new Date(b.date) - new Date(a.date))[0].weight;
-            };
-
             return (
                 <div className="max-w-4xl mx-auto p-6 bg-gradient-to-br from-orange-50 to-yellow-50 min-h-screen">
                     <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
-                                <Heart className="text-white" size={24} />
+                                <span className="text-white text-2xl">🐹</span>
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-800">ハムスター健康管理アプリ🐹</h1>
@@ -223,25 +60,34 @@
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
                                 <div className="bg-blue-50 p-6 rounded-lg">
-                                    <Activity className="mx-auto mb-4 text-blue-600" size={48} />
+                                    <div className="text-4xl mb-4">📊</div>
                                     <h3 className="font-bold text-blue-800 mb-2">健康管理</h3>
                                     <p className="text-blue-600 text-sm">体重変化をグラフで確認</p>
                                 </div>
                                 <div className="bg-green-50 p-6 rounded-lg">
-                                    <Heart className="mx-auto mb-4 text-green-600" size={48} />
+                                    <div className="text-4xl mb-4">❤️</div>
                                     <h3 className="font-bold text-green-800 mb-2">複数匹対応</h3>
                                     <p className="text-green-600 text-sm">最大999匹まで管理可能</p>
                                 </div>
                                 <div className="bg-purple-50 p-6 rounded-lg">
-                                    <Stethoscope className="mx-auto mb-4 text-purple-600" size={48} />
+                                    <div className="text-4xl mb-4">🏥</div>
                                     <h3 className="font-bold text-purple-800 mb-2">通院記録</h3>
                                     <p className="text-purple-600 text-sm">病院の記録も管理</p>
                                 </div>
                                 <div className="bg-orange-50 p-6 rounded-lg">
-                                    <Download className="mx-auto mb-4 text-orange-600" size={48} />
+                                    <div className="text-4xl mb-4">💾</div>
                                     <h3 className="font-bold text-orange-800 mb-2">データ保護</h3>
                                     <p className="text-orange-600 text-sm">バックアップ機能付き</p>
                                 </div>
+                            </div>
+                            
+                            <div className="mt-8">
+                                <button 
+                                    onClick={() => window.location.reload()}
+                                    className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
+                                >
+                                    アプリを開始する
+                                </button>
                             </div>
                         </div>
 
