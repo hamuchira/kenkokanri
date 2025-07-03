@@ -15,12 +15,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="ハムスター健康管理🐹">
     
-    <!-- Open Graph設定 -->
-    <meta property="og:title" content="ハムスター健康管理アプリ🐹">
-    <meta property="og:description" content="大切なハムスターの健康を記録・管理するアプリです。体重、食事、健康チェック、通院記録などを管理できます。">
-    <meta property="og:image" content="hamster-icon.png">
-    <meta property="og:type" content="website">
-    
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -37,124 +31,57 @@
     
     <script type="text/babel">
         const { useState, useEffect } = React;
+        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = Recharts;
 
         const HamsterHealthApp = () => {
             const [showApp, setShowApp] = useState(false);
             const [activeTab, setActiveTab] = useState('dashboard');
             const [selectedHamster, setSelectedHamster] = useState(1);
-            const [showAddHamster, setShowAddHamster] = useState(false);
-            const [showEditHamster, setShowEditHamster] = useState(false);
-            const [showWeightChart, setShowWeightChart] = useState(false);
-            const [editingWeightId, setEditingWeightId] = useState(null);
-            const [editingWeight, setEditingWeight] = useState({ weight: '', date: '' });
             
-            // ローカルストレージから初期データを読み込み
-            const loadFromStorage = (key, defaultValue) => {
-                try {
-                    const stored = localStorage.getItem(key);
-                    return stored ? JSON.parse(stored) : defaultValue;
-                } catch (error) {
-                    console.error(`Error loading ${key}:`, error);
-                    return defaultValue;
+            // 簡単なステート管理
+            const [hamsters, setHamsters] = useState([
+                { 
+                    id: 1, 
+                    name: 'もちもち', 
+                    breed: 'ゴールデン', 
+                    color: 'ノーマル',
+                    gender: '不明',
+                    genetics: '不明'
                 }
-            };
+            ]);
 
-            // ローカルストレージに保存
-            const saveToStorage = (key, value) => {
-                try {
-                    localStorage.setItem(key, JSON.stringify(value));
-                } catch (error) {
-                    console.error(`Error saving ${key}:`, error);
-                }
-            };
-
-            const [hamsters, setHamsters] = useState(() => 
-                loadFromStorage('hamsters', [
-                    { 
-                        id: 1, 
-                        name: 'もちもち', 
-                        breed: 'ゴールデン', 
-                        color: 'ノーマル',
-                        gender: '不明',
-                        genetics: '不明',
-                        birthDate: '2024-11-03',
-                        birthDateType: 'exact',
-                        adoptDate: '2024-11-10',
-                        adoptDateType: 'exact',
-                        photo: null
-                    }
-                ])
-            );
-
-            const [weightRecords, setWeightRecords] = useState(() =>
-                loadFromStorage('weightRecords', [
-                    { id: 1, hamsterId: 1, date: '2025-07-01', weight: 85.2 },
-                    { id: 2, hamsterId: 1, date: '2025-06-24', weight: 83.5 },
-                    { id: 3, hamsterId: 1, date: '2025-06-17', weight: 82.1 },
-                    { id: 4, hamsterId: 1, date: '2025-06-10', weight: 80.8 },
-                    { id: 5, hamsterId: 1, date: '2025-06-03', weight: 78.3 }
-                ])
-            );
-
-            const [foodRecords, setFoodRecords] = useState(() =>
-                loadFromStorage('foodRecords', [
-                    { id: 1, hamsterId: 1, date: '2025-07-03', food: 'ペレット', amount: '5g' },
-                    { id: 2, hamsterId: 1, date: '2025-07-03', food: 'ひまわりの種', amount: '2粒' }
-                ])
-            );
-
-            const [healthChecks, setHealthChecks] = useState(() =>
-                loadFromStorage('healthChecks', [
-                    { id: 1, hamsterId: 1, date: '2025-07-03', eyes: true, nose: true, teeth: true, fur: true, activity: true, appetite: true }
-                ])
-            );
-
-            const [medicalRecords, setMedicalRecords] = useState(() =>
-                loadFromStorage('medicalRecords', [
-                    { id: 1, hamsterId: 1, date: '2025-06-15', hospital: 'ペットクリニック', medicine: 'ビタミン剤', symptoms: '食欲低下', cost: 3500 }
-                ])
-            );
+            const [weightRecords, setWeightRecords] = useState([
+                { id: 1, hamsterId: 1, date: '2025-07-01', weight: 85.2 },
+                { id: 2, hamsterId: 1, date: '2025-06-24', weight: 83.5 },
+                { id: 3, hamsterId: 1, date: '2025-06-17', weight: 82.1 }
+            ]);
 
             const [newWeight, setNewWeight] = useState('');
-            const [newWeightDate, setNewWeightDate] = useState('');
+            const [showWeightChart, setShowWeightChart] = useState(false);
 
-            const MAX_HAMSTERS = 999;
             const currentHamster = hamsters.find(h => h.id === selectedHamster);
-            const currentDate = new Date().toISOString().split('T')[0];
 
-            // データが変更されたときにローカルストレージに保存
-            useEffect(() => {
-                saveToStorage('hamsters', hamsters);
-            }, [hamsters]);
+            const addWeightRecord = () => {
+                if (newWeight) {
+                    const record = {
+                        id: Date.now(),
+                        hamsterId: selectedHamster,
+                        date: new Date().toISOString().split('T')[0],
+                        weight: parseFloat(newWeight)
+                    };
+                    setWeightRecords([record, ...weightRecords]);
+                    setNewWeight('');
+                }
+            };
 
-            useEffect(() => {
-                saveToStorage('weightRecords', weightRecords);
-            }, [weightRecords]);
-
-            useEffect(() => {
-                saveToStorage('foodRecords', foodRecords);
-            }, [foodRecords]);
-
-            useEffect(() => {
-                saveToStorage('healthChecks', healthChecks);
-            }, [healthChecks]);
-
-            useEffect(() => {
-                saveToStorage('medicalRecords', medicalRecords);
-            }, [medicalRecords]);
-
-            const calculateAge = (birthDate, birthDateType) => {
-                if (birthDateType === 'unknown') return '不明';
-                
-                const birth = new Date(birthDate);
-                const today = new Date();
-                const diffTime = Math.abs(today - birth);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                const months = Math.floor(diffDays / 30);
-                
-                if (birthDateType === 'year') return `約${months}ヶ月`;
-                if (birthDateType === 'yearMonth') return `約${months}ヶ月`;
-                return `${months}ヶ月`;
+            const getWeightChartData = () => {
+                return weightRecords
+                    .filter(r => r.hamsterId === selectedHamster)
+                    .sort((a, b) => new Date(a.date) - new Date(b.date))
+                    .map(record => ({
+                        date: record.date,
+                        weight: record.weight
+                    }));
             };
 
             const getCurrentWeight = () => {
@@ -163,97 +90,45 @@
                 return hamsterWeights.sort((a, b) => new Date(b.date) - new Date(a.date))[0].weight;
             };
 
-            const getPeakWeight = () => {
-                const hamsterWeights = weightRecords.filter(r => r.hamsterId === selectedHamster);
-                if (hamsterWeights.length === 0) return 0;
-                return Math.max(...hamsterWeights.map(r => r.weight));
-            };
-
-            const getWeightTrend = () => {
-                const hamsterWeights = weightRecords.filter(r => r.hamsterId === selectedHamster).sort((a, b) => new Date(b.date) - new Date(a.date));
-                if (hamsterWeights.length < 2) return 'stable';
-                const latest = hamsterWeights[0].weight;
-                const previous = hamsterWeights[1].weight;
-                if (latest > previous) return 'up';
-                if (latest < previous) return 'down';
-                return 'stable';
-            };
-
-            const addWeightRecord = () => {
-                if (newWeight) {
-                    const record = {
-                        id: Date.now(),
-                        hamsterId: selectedHamster,
-                        date: newWeightDate || currentDate,
-                        weight: parseFloat(newWeight)
-                    };
-                    setWeightRecords([record, ...weightRecords]);
-                    setNewWeight('');
-                    setNewWeightDate('');
-                }
-            };
-
             const TabButton = ({ id, icon, label, active, onClick }) => (
                 <button
                     onClick={() => onClick(id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${
                         active ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                 >
-                    <span className="text-lg">{icon}</span>
-                    <span className="text-sm">{label}</span>
+                    <span>{icon}</span>
+                    <span className="hidden sm:block">{label}</span>
                 </button>
             );
 
             // ランディングページ
             if (!showApp) {
                 return (
-                    <div className="max-w-4xl mx-auto p-6 bg-gradient-to-br from-orange-50 to-yellow-50 min-h-screen">
-                        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                    <div className="max-w-4xl mx-auto p-4 sm:p-6 bg-gradient-to-br from-orange-50 to-yellow-50 min-h-screen">
+                        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
-                                    <span className="text-white text-2xl">🐹</span>
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-500 rounded-full flex items-center justify-center">
+                                    <span className="text-white text-xl sm:text-2xl">🐹</span>
                                 </div>
                                 <div>
-                                    <h1 className="text-2xl font-bold text-gray-800">ハムスター健康管理アプリ🐹</h1>
-                                    <p className="text-gray-600">データはこの端末に安全に保存されます</p>
+                                    <h1 className="text-xl sm:text-2xl font-bold text-gray-800">ハムスター健康管理アプリ🐹</h1>
+                                    <p className="text-sm sm:text-base text-gray-600">データはこの端末に安全に保存されます</p>
                                 </div>
                             </div>
 
-                            <div className="text-center py-12">
-                                <div className="text-6xl mb-4">🐹</div>
-                                <h2 className="text-2xl font-bold text-gray-800 mb-4">ハムスター健康管理アプリ</h2>
-                                <p className="text-gray-600 mb-8">
+                            <div className="text-center py-8 sm:py-12">
+                                <div className="text-4xl sm:text-6xl mb-4">🐹</div>
+                                <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">ハムスター健康管理アプリ</h2>
+                                <p className="text-sm sm:text-base text-gray-600 mb-8">
                                     大切なハムスターの健康を記録・管理するアプリです。<br />
                                     体重、食事、健康チェック、通院記録などを管理できます。
                                 </p>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-                                    <div className="bg-blue-50 p-6 rounded-lg">
-                                        <div className="text-4xl mb-4">📊</div>
-                                        <h3 className="font-bold text-blue-800 mb-2">健康管理</h3>
-                                        <p className="text-blue-600 text-sm">体重変化をグラフで確認</p>
-                                    </div>
-                                    <div className="bg-green-50 p-6 rounded-lg">
-                                        <div className="text-4xl mb-4">❤️</div>
-                                        <h3 className="font-bold text-green-800 mb-2">複数匹対応</h3>
-                                        <p className="text-green-600 text-sm">最大999匹まで管理可能</p>
-                                    </div>
-                                    <div className="bg-purple-50 p-6 rounded-lg">
-                                        <div className="text-4xl mb-4">🏥</div>
-                                        <h3 className="font-bold text-purple-800 mb-2">通院記録</h3>
-                                        <p className="text-purple-600 text-sm">病院の記録も管理</p>
-                                    </div>
-                                    <div className="bg-orange-50 p-6 rounded-lg">
-                                        <div className="text-4xl mb-4">💾</div>
-                                        <h3 className="font-bold text-orange-800 mb-2">データ保護</h3>
-                                        <p className="text-orange-600 text-sm">バックアップ機能付き</p>
-                                    </div>
-                                </div>
                                 
                                 <div className="mt-8">
                                     <button 
                                         onClick={() => setShowApp(true)}
-                                        className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
+                                        className="bg-orange-500 hover:bg-orange-600 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-lg font-semibold transition-colors"
                                     >
                                         アプリを開始する
                                     </button>
@@ -261,7 +136,7 @@
                             </div>
 
                             <div className="text-center">
-                                <p className="text-sm text-gray-500">
+                                <p className="text-xs sm:text-sm text-gray-500">
                                     ※ このアプリは完全にローカルで動作し、データはお使いの端末にのみ保存されます
                                 </p>
                             </div>
@@ -272,22 +147,19 @@
 
             // メインアプリ
             return (
-                <div className="max-w-4xl mx-auto p-6 bg-gradient-to-br from-orange-50 to-yellow-50 min-h-screen">
-                    <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
-                                <span className="text-white text-2xl">🐹</span>
+                <div className="max-w-4xl mx-auto p-3 sm:p-6 bg-gradient-to-br from-orange-50 to-yellow-50 min-h-screen">
+                    <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
+                        <div className="flex items-center gap-3 mb-4 sm:mb-6">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-500 rounded-full flex items-center justify-center">
+                                <span className="text-white text-xl sm:text-2xl">🐹</span>
                             </div>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-800">ハムスター健康管理</h1>
-                                <p className="text-gray-600">みんなの健康をサポート（登録数: {hamsters.length}匹 / 最大{MAX_HAMSTERS}匹登録可能）</p>
-                                <div className="flex items-center gap-4 mt-2">
-                                    <p className="text-xs text-green-600">✅ データは自動保存されます（リロードしても消えません）</p>
-                                </div>
+                            <div className="flex-1">
+                                <h1 className="text-lg sm:text-2xl font-bold text-gray-800">ハムスター健康管理</h1>
+                                <p className="text-xs sm:text-sm text-gray-600">登録数: {hamsters.length}匹</p>
                             </div>
                         </div>
 
-                        <div className="flex gap-2 mb-6 overflow-x-auto">
+                        <div className="flex gap-1 sm:gap-2 mb-4 sm:mb-6 overflow-x-auto">
                             <TabButton
                                 id="dashboard"
                                 icon="📊"
@@ -310,64 +182,33 @@
                                 onClick={setActiveTab}
                             />
                             <TabButton
-                                id="health"
-                                icon="❤️"
-                                label="健康チェック"
-                                active={activeTab === 'health'}
-                                onClick={setActiveTab}
-                            />
-                            <TabButton
-                                id="medical"
-                                icon="🏥"
-                                label="通院記録"
-                                active={activeTab === 'medical'}
+                                id="help"
+                                icon="❓"
+                                label="使い方"
+                                active={activeTab === 'help'}
                                 onClick={setActiveTab}
                             />
                         </div>
 
                         {activeTab === 'dashboard' && currentHamster && (
-                            <div className="space-y-6">
-                                <div className="bg-gradient-to-r from-orange-400 to-orange-500 text-white p-6 rounded-xl">
-                                    <div className="flex items-start gap-4">
-                                        <div className="flex-1">
-                                            <h2 className="text-xl font-semibold mb-2">{currentHamster.name}</h2>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-orange-100">品種: {currentHamster.breed}</p>
-                                                    <p className="text-orange-100">毛色: {currentHamster.color}</p>
-                                                    <p className="text-orange-100">性別: {currentHamster.gender}</p>
-                                                    <p className="text-orange-100">遺伝子型: {currentHamster.genetics}</p>
-                                                    <p className="text-orange-100">月齢: {calculateAge(currentHamster.birthDate, currentHamster.birthDateType)}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-orange-100">現在の体重: {getCurrentWeight()}g</p>
-                                                    <p className="text-orange-100">
-                                                        体重変化: {getWeightTrend() === 'up' ? '↗️ 増加' : getWeightTrend() === 'down' ? '↘️ 減少' : '➡️ 安定'}
-                                                        （ピーク体重 {getPeakWeight()}g）
-                                                    </p>
-                                                </div>
-                                            </div>
+                            <div className="space-y-4 sm:space-y-6">
+                                <div className="bg-gradient-to-r from-orange-400 to-orange-500 text-white p-4 sm:p-6 rounded-xl">
+                                    <h2 className="text-lg sm:text-xl font-semibold mb-3">{currentHamster.name}</h2>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                        <div className="space-y-1">
+                                            <p className="text-orange-100 text-sm">品種: {currentHamster.breed}</p>
+                                            <p className="text-orange-100 text-sm">毛色: {currentHamster.color}</p>
+                                            <p className="text-orange-100 text-sm">性別: {currentHamster.gender}</p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-orange-100 text-sm">現在の体重: {getCurrentWeight()}g</p>
+                                            <p className="text-orange-100 text-sm">体重記録: {weightRecords.filter(r => r.hamsterId === selectedHamster).length}回</p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="bg-green-50 p-4 rounded-lg border-2 border-green-200">
-                                        <h3 className="font-semibold text-green-800 mb-2">健康スコア</h3>
-                                        <div className="text-2xl font-bold text-green-600">100%</div>
-                                    </div>
-                                    <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
-                                        <h3 className="font-semibold text-blue-800 mb-2">体重記録</h3>
-                                        <div className="text-2xl font-bold text-blue-600">{weightRecords.filter(r => r.hamsterId === selectedHamster).length}回</div>
-                                    </div>
-                                    <div className="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
-                                        <h3 className="font-semibold text-purple-800 mb-2">食事記録</h3>
-                                        <div className="text-2xl font-bold text-purple-600">{foodRecords.filter(r => r.hamsterId === selectedHamster).length}回</div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-gray-50 p-4 rounded-lg">
-                                    <h3 className="font-semibold mb-3">最近の記録</h3>
+                                <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                                    <h3 className="font-semibold mb-3 text-sm sm:text-base">最近の記録</h3>
                                     <div className="space-y-2">
                                         {weightRecords
                                             .filter(r => r.hamsterId === selectedHamster)
@@ -375,8 +216,8 @@
                                             .slice(0, 3)
                                             .map(record => (
                                                 <div key={record.id} className="flex justify-between items-center py-2 border-b border-gray-200">
-                                                    <span>{record.date}</span>
-                                                    <span className="font-medium">{record.weight}g</span>
+                                                    <span className="text-sm">{record.date}</span>
+                                                    <span className="font-medium text-sm">{record.weight}g</span>
                                                 </div>
                                             ))}
                                     </div>
@@ -385,44 +226,67 @@
                         )}
 
                         {activeTab === 'weight' && (
-                            <div className="space-y-6">
-                                <div className="bg-blue-50 p-4 rounded-lg">
-                                    <h3 className="font-semibold mb-3">体重を記録する</h3>
-                                    <div className="flex gap-3 mb-3">
+                            <div className="space-y-4 sm:space-y-6">
+                                <div className="bg-blue-50 p-3 sm:p-4 rounded-lg">
+                                    <h3 className="font-semibold mb-3 text-sm sm:text-base">体重を記録する</h3>
+                                    <div className="flex gap-2 mb-3">
                                         <input
                                             type="number"
                                             step="0.1"
                                             placeholder="体重（g）"
                                             value={newWeight}
                                             onChange={(e) => setNewWeight(e.target.value)}
-                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        />
-                                        <input
-                                            type="date"
-                                            value={newWeightDate}
-                                            onChange={(e) => setNewWeightDate(e.target.value)}
-                                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                                         />
                                         <button
                                             onClick={addWeightRecord}
-                                            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                                            className="px-3 sm:px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
                                         >
                                             記録
                                         </button>
                                     </div>
-                                    <p className="text-sm text-gray-600">日付を指定しない場合は今日の日付が使用されます</p>
                                 </div>
 
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                    <button
+                                        onClick={() => setShowWeightChart(!showWeightChart)}
+                                        className="px-3 sm:px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm"
+                                    >
+                                        📊 {showWeightChart ? 'グラフを隠す' : 'グラフを表示'}
+                                    </button>
+                                </div>
+
+                                {showWeightChart && (
+                                    <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                                        <h3 className="font-semibold mb-3 text-sm sm:text-base">体重変化グラフ</h3>
+                                        {getWeightChartData().length > 0 ? (
+                                            <div className="w-full h-64 sm:h-80">
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <LineChart data={getWeightChartData()}>
+                                                        <CartesianGrid strokeDasharray="3 3" />
+                                                        <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                                                        <YAxis tick={{ fontSize: 12 }} />
+                                                        <Tooltip formatter={(value) => [`${value}g`, '体重']} />
+                                                        <Line type="monotone" dataKey="weight" stroke="#3b82f6" strokeWidth={2} />
+                                                    </LineChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        ) : (
+                                            <p className="text-gray-600 text-center py-8 text-sm">体重データがありません</p>
+                                        )}
+                                    </div>
+                                )}
+
                                 <div className="space-y-3">
-                                    <h3 className="font-semibold">体重履歴</h3>
+                                    <h3 className="font-semibold text-sm sm:text-base">体重履歴</h3>
                                     {weightRecords
                                         .filter(r => r.hamsterId === selectedHamster)
                                         .sort((a, b) => new Date(b.date) - new Date(a.date))
                                         .map(record => (
                                             <div key={record.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                                                 <div>
-                                                    <span className="font-medium">{record.weight}g</span>
-                                                    <span className="text-gray-600 ml-3">{record.date}</span>
+                                                    <span className="font-medium text-sm">{record.weight}g</span>
+                                                    <span className="text-gray-600 ml-3 text-sm">{record.date}</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -438,19 +302,36 @@
                             </div>
                         )}
 
-                        {activeTab === 'health' && (
-                            <div className="text-center py-12">
-                                <div className="text-6xl mb-4">❤️</div>
-                                <h3 className="text-xl font-bold text-gray-800 mb-2">健康チェック</h3>
-                                <p className="text-gray-600">この機能は開発中です</p>
-                            </div>
-                        )}
+                        {activeTab === 'help' && (
+                            <div className="space-y-4 sm:space-y-6">
+                                <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 sm:p-6 rounded-xl border border-blue-200">
+                                    <h2 className="text-lg sm:text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                        ❓ 使い方🐹
+                                    </h2>
+                                    <p className="text-gray-700 mb-4 text-sm sm:text-base">
+                                        このアプリでハムスターの健康を管理する方法をご説明します。
+                                    </p>
+                                </div>
 
-                        {activeTab === 'medical' && (
-                            <div className="text-center py-12">
-                                <div className="text-6xl mb-4">🏥</div>
-                                <h3 className="text-xl font-bold text-gray-800 mb-2">通院記録</h3>
-                                <p className="text-gray-600">この機能は開発中です</p>
+                                <div className="bg-green-50 p-4 sm:p-6 rounded-xl border-2 border-green-200">
+                                    <h3 className="text-base sm:text-lg font-bold text-green-800 mb-4">
+                                        💡 基本的な使い方
+                                    </h3>
+                                    <div className="space-y-3 text-green-700 text-sm sm:text-base">
+                                        <div className="bg-white p-3 rounded-lg">
+                                            <strong>📊 ダッシュボード</strong>
+                                            <p className="text-xs sm:text-sm text-green-600 mt-1">ハムスターの基本情報と健康状態を確認</p>
+                                        </div>
+                                        <div className="bg-white p-3 rounded-lg">
+                                            <strong>⚖️ 体重記録</strong>
+                                            <p className="text-xs sm:text-sm text-green-600 mt-1">体重を記録し、グラフで変化を確認</p>
+                                        </div>
+                                        <div className="bg-white p-3 rounded-lg">
+                                            <strong>🍽️ 食事記録</strong>
+                                            <p className="text-xs sm:text-sm text-green-600 mt-1">与えた食べ物と量を記録（開発中）</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
